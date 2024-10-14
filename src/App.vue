@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 
 const originalJson = ref('');
 const formattedJson = ref('');
@@ -12,6 +12,30 @@ const formatJson = () => {
     formattedJson.value = 'Invalid JSON';
   }
 };
+
+const colorCodedJson = computed(() => {
+  if (formattedJson.value === 'Invalid JSON') {
+    return formattedJson.value;
+  }
+  return formattedJson.value.replace(
+    /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
+    (match) => {
+      let cls = 'text-blue-600'; // string
+      if (/^"/.test(match)) {
+        if (/:$/.test(match)) {
+          cls = 'text-red-600'; // key
+        }
+      } else if (/true|false/.test(match)) {
+        cls = 'text-purple-600'; // boolean
+      } else if (/null/.test(match)) {
+        cls = 'text-gray-600'; // null
+      } else {
+        cls = 'text-green-600'; // number
+      }
+      return `<span class="${cls}">${match}</span>`;
+    }
+  );
+});
 </script>
 
 <template>
@@ -33,11 +57,10 @@ const formatJson = () => {
       </div>
       <div class="bg-white rounded-lg shadow-md p-6">
         <h2 class="text-xl font-semibold mb-4 text-gray-700">Formatted JSON</h2>
-        <textarea 
-          v-model="formattedJson" 
-          readonly 
-          class="w-full h-96 p-3 bg-gray-50 border border-gray-300 rounded-md font-mono text-sm"
-        ></textarea>
+        <pre 
+          v-html="colorCodedJson" 
+          class="w-full h-96 p-3 bg-gray-50 border border-gray-300 rounded-md font-mono text-sm overflow-auto"
+        ></pre>
       </div>
     </div>
   </div>
